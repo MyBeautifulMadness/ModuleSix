@@ -26,9 +26,10 @@
             </div>
 
             <button id="clusterize_button">Clusterize</button>
-            <button id="clear_field_button">Clear field</button>
-            <button>Export</button>
-            <button>Import</button>
+            <button id="clear_field_button">Reset</button>
+            <button id="export_button">Export</button>
+            <label for="import_button">Import</label>
+            <input id="import_button" type="file" accept=".txt">
             
             <div id="set_point_radius_range">
                 <label id="point_radius_label">Point radius: 10</label>
@@ -40,14 +41,19 @@
                 <input id="cluster_count" type="range" value="2" min="1" max="10">
             </div>
 
+            <div id="set_scale_range">
+                <label id="set_scale_label">Scale: 1</label>
+                <input id="set_scale" type="range" value="1" min="0.5" max="5" step="0.1">
+            </div>
         </div>
 
         <div id="visualisation_field">
             <canvas id="field"></canvas>
         </div>
 
-        <div id="point_info">
-
+        <div id="point_config">
+            <h1>Point configuration</h1>
+            <p id="info_p">Select "Explore field" mode to view point configurations.</p>
         </div>
 
         <script src="../scripts/clustering.js" type="module"></script>

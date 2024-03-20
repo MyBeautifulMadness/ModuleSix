@@ -5,15 +5,11 @@ body {
     grid-template-rows: 1fr 6fr;
 }
 
-#settings_bar {
-    grid-column: 1/3;
+#field {
+    height: 100%;
+    width: 100%;
 }
 
-/* #field {
-    height: 500px;
-    width: 500px;
-} */
-
-div {
-    border: 1px solid gray; 
+#settings_bar {
+    grid-column: 1/3;
 }

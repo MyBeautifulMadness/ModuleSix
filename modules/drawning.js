@@ -1,6 +1,5 @@
 const Types = {
-    Circle: 'Circle',
-    Square: 'Square'
+    Circle: 'Circle'
 };
 
 export class Position {
@@ -25,6 +24,24 @@ export class Field {
         this.context = this.canvas.getContext('2d');
 
         this.objects = new Array();
+        this.scale = 1;
+        this.transform_x = 0;
+        this.transform_y = 0;
+    }
+
+    resize() {
+        // получаем размер HTML-элемента canvas
+        var displayWidth  = this.canvas.clientWidth;
+        var displayHeight = this.canvas.clientHeight;
+        
+        // проверяем, отличается ли размер canvas
+        if (this.canvas.width  != displayWidth ||
+            this.canvas.height != displayHeight - 4) {
+       
+          // подгоняем размер буфера отрисовки под размер HTML-элемента
+          this.canvas.width  = displayWidth;
+          this.canvas.height = displayHeight;
+        }
     }
 
     getUserClickPosition (event) {
@@ -41,7 +58,7 @@ export class Field {
     }
 
     createObject (cursorPosition, type, colors, size) {
-        let position = cursorPosition;
+        let position = new Position((cursorPosition.x - this.transform_x) / this.scale, (cursorPosition.y - this.transform_y) / this.scale);
         let object = new Object(position, type, colors, size);
         this.objects.push(object);
     }
@@ -51,10 +68,11 @@ export class Field {
     }
 
     removeObject (cursorPosition) {
+        cursorPosition = new Position((cursorPosition.x - this.transform_x) / this.scale , (cursorPosition.y - this.transform_y) / this.scale)
         for (let i = 0; i < this.objects.length; i++) {
             let objectPosition = this.objects[i].position;
             if (this.objects[i].type == Types.Circle) {
-                if (this.getPointsDistance(cursorPosition, objectPosition) <= this.objects[i].size) {
+                if (this.getPointsDistance(cursorPosition, objectPosition) <= this.objects[i].size * this.scale) {
                     this.objects = this.objects.slice(0, i).concat(this.objects.slice(i + 1));
                     return i;
                 } 
@@ -62,7 +80,22 @@ export class Field {
         }
     }
 
+    getPointIndexByPositionOrNull(cursorPosition) {
+        cursorPosition = new Position((cursorPosition.x - this.transform_x) / this.scale , (cursorPosition.y - this.transform_y) / this.scale)
+        for (let i = 0; i < this.objects.length; i++) {
+            let objectPosition = this.objects[i].position;
+            if (this.objects[i].type == Types.Circle) {
+                if (this.getPointsDistance(cursorPosition, objectPosition) <= this.objects[i].size * this.scale) {
+                    return i;
+                } 
+            }
+        }
+
+        return null;
+    }
+
     display () {
+        this.resize();
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         for (let object of this.objects) {
@@ -72,8 +105,8 @@ export class Field {
                     this.context.fillStyle = object.colors[i];
 
                     this.context.beginPath();
-                    this.context.moveTo(object.position.x, object.position.y);
-                    this.context.arc(object.position.x, object.position.y, object.size, 2 * Math.PI / n * i, 2 * Math.PI / n * i + 2 * Math.PI / n);
+                    this.context.moveTo(object.position.x * this.scale + this.transform_x, object.position.y * this.scale + this.transform_y);
+                    this.context.arc(object.position.x * this.scale + this.transform_x, object.position.y * this.scale + this.transform_y, object.size * this.scale, 2 * Math.PI / n * i, 2 * Math.PI / n * i + 2 * Math.PI / n);
                     this.context.closePath();
                     this.context.fill();
                 }
