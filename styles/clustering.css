@@ -1,0 +1,19 @@
+body {
+    display: grid;
+    height: 100vh;
+    grid-template-columns: 4fr 1fr;
+    grid-template-rows: 1fr 6fr;
+}
+
+#settings_bar {
+    grid-column: 1/3;
+}
+
+/* #field {
+    height: 500px;
+    width: 500px;
+} */
+
+div {
+    border: 1px solid gray; 
+}
