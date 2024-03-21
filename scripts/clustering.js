@@ -1,6 +1,5 @@
 import { Field, Position } from "../modules/drawning.js"
-
-const colors = ["#f08080", "#a0c4ff", "#60d394", "#ffd97d", "#A5A5A5", "#f46036", "#0f7173", "#6c5b7b", "#a01a7d", "#d5ac4e"];
+import { colors } from "./conts.js" 
 
 class Point {
     constructor (position, weight) {
@@ -28,23 +27,35 @@ let explore_radio = document.getElementById("explore_field");
 let cluster_count_range = document.getElementById("cluster_count");
 let radius_range = document.getElementById("point_radius");
 let set_scale_range = document.getElementById("set_scale");
+let set_scale_label = document.getElementById("set_scale_label");
 let point_radius_label = document.getElementById("point_radius_label");
 let cluster_count_label = document.getElementById("cluster_count_label");
 let clusterize_button = document.getElementById("clusterize_button");
-let import_file = document.getElementById("import_button");
+let import_button = document.getElementById("import_button");
 
 let cluster_count = cluster_count_range.value;
-let radius = radius_range.value;
-let scale = 1;
-let points = new Array();
-let mode = "Set";
+let points = [];
 
+let previous_cursor_position = new Position(0, 0);
+let radius = radius_range.value;
 let translating = false;
-let last_x = 0;
-let last_y = 0;
+let scale = 1;
 
 let field = new Field("field");
 field.canvas.style.cursor = "none";
+
+let mode = "Set";
+let mode_action = {
+    "Set": set_point,
+    "Remove": remove_point,
+    "Explore": show_point_configuration
+}
+
+let mode_cursor = {
+    "Set": "none",
+    "Remove": "default",
+    "Explore": "default"
+}
 
 function k_means() {
     let clusters = new Array(cluster_count);
@@ -101,43 +112,37 @@ function changeClusterColor(cluster_name, algorithm, new_color) {
     }
 
     sync_points_and_objects();
+    field.display();
 }
 
 function sync_points_and_objects() {
+    let point_colors;
     for (let i = 0; i < points.length; i++) {
-        let point_colors = [];
-        for (let cluster in points[i].clusters) {
-            point_colors.push(points[i].clusters[cluster].color);
+        if (points[i].clusters["k-means"]) {
+            point_colors = [];
+            for (let cluster in points[i].clusters) {
+                point_colors.push(points[i].clusters[cluster].color);
+            }
+            field.objects[i].colors = point_colors;
         }
-        field.objects[i].colors = point_colors;
-        // field.objects[i].position = points[i].position;
         field.objects[i].size = points[i].weight;
     }
-
-    field.display()
 }
 
 function import_txt(file) {
     reset();
+
     const reader = new FileReader();
     reader.onload = function () {
-        let lines = reader.result.split("\n");
-        for (let i = 0; i < lines.length - 1; i++) {
-            let x = parseFloat(lines[i].split(" ")[0]);
-            let y = parseFloat(lines[i].split(" ")[1]);
-            let weight = parseFloat(lines[i].split(" ")[2]);
-            console.log(x, y, weight);
-            if (x != NaN && y != NaN && weight != NaN) {
-                let position = new Position(x, y);
+        let lines = reader.result.split("\n").slice(0, -1);
+        let x, y, weight, position;
+        for (let line of lines) {
+            [x, y, weight] = line.split(' ').map(Number);
 
-                let point = new Point(position, weight, ["None"]);
-                points.push(point);
-
-                field.createObject(position, "Circle", ["black"], weight);
-            }
-            
-            field.display();
+            position = new Position(x, y);
+            set_point(position, weight)
         }
+        field.display();
     };
     reader.readAsText(file);
 }
@@ -145,62 +150,67 @@ function import_txt(file) {
 function export_txt() {
     let content = "";
     for (let point of points) {
-        console.log(point);
         content += `${point.position.x} ${point.position.y} ${point.weight}\n`;
     }
 
-    let a = document.createElement("a");
     var data = new Blob([content], {type: 'text/plain'});
-    var url = URL.createObjectURL(data);
-    a.href = url;
-    a.download = "points.txt";
+    let a = create_element_a_download(data);
+
     a.click();
 }
 
 function reset() {
-    document.getElementById("set_point").checked = true;
-    document.getElementById("point_radius").value = 10;
-    document.getElementById("cluster_count").value = 2;
-    field.clear();
-    points = [];
-    radius = radius_range.value;
-    point_radius_label.innerText = "Point radius: " + radius.toString();
-    cluster_count = cluster_count_range.value;
-    cluster_count_label.innerText = "Clusters count: " + cluster_count.toString();
-    field.canvas.style.cursor = "none";
-    mode = "Set";
-    
-    scale = 1;
-    field.scale = scale;
-    document.getElementById("set_scale_label").innerText = `Scale: ${scale}`;
+    reset_information_field();
+    reset_radius();
+    reset_clusters_count();
+    reset_scale();
+    reset_mode();
 
     field.transform_x = 0;
     field.transform_y = 0;
-
-    reset_sidebar();
-
+    
+    points = [];
+    
+    field.clear();
 }
 
-function reset_sidebar() {
-    let last_div = document.getElementById("point_config");
-    last_div.remove();
-
-    let div_point_config = document.createElement("div")
-    document.body.appendChild(div_point_config);
-    div_point_config.id = "point_config";
-    // <p id="info_p">Select "Explore field" mode to view point configurations.</p>
-
-    let point_configuration_header = document.createElement("h1");
-    point_configuration_header.innerText = "Point configuration";
-    div_point_config.appendChild(point_configuration_header);
-
-    let info_p = document.createElement("p");
-    info_p.innerText = 'Select "Explore field" mode to view point configurations.';
-    info_p.id = "info_p";
-    div_point_config.appendChild(info_p);
+function reset_mode() {
+    mode = "Set";
+    field.canvas.style.cursor = mode_cursor[mode];
+    set_point_radio.checked = true;
 }
 
-clusterize_button.addEventListener("click", function() {
+function reset_radius() {
+    radius_range.value = 10;
+    radius = radius_range.value;
+    point_radius_label.innerText = `Point radius: ${radius}`;
+}
+
+function reset_clusters_count() {
+    cluster_count_range.value = 2;
+    cluster_count = cluster_count_range.value;
+    cluster_count_label.innerText = `Clusters count: ${cluster_count}`;
+}
+
+function reset_scale() {
+    scale = 1;
+    field.scale = scale;
+    set_scale_label.innerText = `Scale: ${scale}`;
+}
+
+function reset_information_field() {
+    document.getElementById("point_config").remove();
+
+    let div_point_configuration = create_element_div("point_config");
+    let header_point_configuration = create_element_h("Point configuration", "point_configuration_h1", 1);
+    let p_message = create_element_p('Select "Explore field" mode to view point configurations.', "info_p");
+
+    document.body.appendChild(div_point_configuration);
+    div_point_configuration.appendChild(header_point_configuration);
+    div_point_configuration.appendChild(p_message);
+}
+
+function clusterize() {
     if (points.length < cluster_count) {
         alert("There cannot be more clusters than points");
         return;
@@ -208,181 +218,212 @@ clusterize_button.addEventListener("click", function() {
 
     k_means();
     sync_points_and_objects();
+    field.display();
+}
+
+function set_point(position, weight=radius) {
+    let point = new Point(position, weight);
+    points.push(point);
+
+    field.createObject(position, "Circle", ["black"], weight);
+}
+
+function remove_point(position) {
+    let index = field.removeObject(position);
+    points = points.slice(0, index).concat(points.slice(index + 1));
+}
+
+function create_element_div(id) {
+    let div = document.createElement("div");
+    div.id = id;
+    return div
+}
+
+function create_element_h(value, id, level) {
+    let h1 = document.createElement(`h${level}`);
+    h1.innerText = value;
+    h1.id = id;
+    return h1;
+}
+
+function create_element_p(value, id) {
+    let p = document.createElement("p");
+    p.innerText = value;
+    p.id = id;
+    return p;
+}
+
+function create_element_label(value, id) {
+    let label = document.createElement("label");
+    label.innerText = value;
+    label.id = id;
+    return label;
+}
+
+function create_element_a_download(data) {
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(data);
+    a.download = "points.txt";
+    return a;
+}
+
+function remove_element(id) {
+    document.getElementById(id).remove();
+}
+
+function show_point_configuration(position) {
+    let point = points[field.getPointIndexByPositionOrNull(position)];
+    if (!point) {
+        return;
+    }
+
+    remove_element("point_config");
+
+    let div_point_config = create_element_div("point_config")
+    let point_header = create_element_h("Point configuration", "point_configuration_h1", 1);
+    let position_p = create_element_p("Position: ", "position_p");
+    let x_p = create_element_p(`x: ${point.position.x}`, "x_p");
+    let y_p = create_element_p(`y: ${point.position.y}`, "y_p");
+    let clusters_header = create_element_h("Clusters", "clusters_h", 3);
+    let weight_p = create_element_label("Weight: ", "weight_label");
+
+    let weight = document.createElement("input");
+    weight.type = "number";
+    weight.min = "1";
+    weight.max = "50";
+    weight.value = point.weight;
+    weight.addEventListener("change", function() {
+        point.weight = weight.value;
+        sync_points_and_objects();
+        field.display();
+    })
+
+    document.body.appendChild(div_point_config);
+    div_point_config.appendChild(point_header);
+    div_point_config.appendChild(position_p);
+    div_point_config.appendChild(x_p);
+    div_point_config.appendChild(y_p);
+    div_point_config.appendChild(weight_p);
+    div_point_config.appendChild(weight);
+
+    let check = false;
+    for (let name in point.clusters) {
+        if (point.clusters[name] != null) {
+            if (!check) {
+                div_point_config.appendChild(clusters_header);
+                check = true;
+            }
+
+            let cluster_name = create_element_p(`Algorithm: ${name}`, "");
+            let center = create_element_p("Center:", "");
+            let x_center = create_element_p(`x: ${point.clusters[name].position.x}`, "");
+            let y_center = create_element_p(`y: ${point.clusters[name].position.y}`, "");
+            let color_text = create_element_p(`Cluster color: ${point.clusters[name].color}`, "");
+            
+            let cluster_color = document.createElement("input");
+            cluster_color.type = "color";
+            cluster_color.value = point.clusters[name].color;
+            cluster_color.addEventListener("change", function() {
+                changeClusterColor(point.clusters[name].name, name, cluster_color.value);
+                color_text.innerText = "Cluster color: " + cluster_color.value;
+            });
+            
+            div_point_config.appendChild(cluster_name);
+            div_point_config.appendChild(center);
+            div_point_config.appendChild(x_center);
+            div_point_config.appendChild(y_center);
+            div_point_config.appendChild(color_text);
+            div_point_config.appendChild(cluster_color);
+        }
+    }
+}
+
+function set_mode(new_mode) {
+    mode = new_mode;
+
+    field.canvas.style.cursor = mode_cursor[mode];
+    field.display();
+
+    reset_information_field();
+}
+
+function update_radius() {
+    radius = radius_range.value;
+    point_radius_label.innerText = `Point radius: ${radius.toString()}`;
+}
+
+function update_clusters_count() {
+    cluster_count = cluster_count_range.value;
+    cluster_count_label.innerText = `Clusters count: ${cluster_count.toString()}`;
+}
+
+function update_scale() {
+    scale = set_scale_range.value;
+    field.scale = scale;
+    set_scale_label.innerText = `Scale: ${scale}`;
+    field.display();
+}
+
+function transform(cursor_position) {
+    field.transform_x += (cursor_position.x - previous_cursor_position.x);
+    field.transform_y += (cursor_position.y - previous_cursor_position.y);
+
+}
+
+field.canvas.addEventListener("click", function(event) {
+    let cursor_position = field.getUserClickPosition(event);
+
+    mode_action[mode](cursor_position);
+    field.display();
 });
+
 
 field.canvas.addEventListener("mousemove", function(event) {
-    let position = field.getUserClickPosition(event);
-    
-    if (translating && mode == "Explore") {
-        field.transform_x += (position.x - last_x);
-        field.transform_y += (position.y - last_y);
-    
-        field.display();
+    field.display();
+    let cursor_position = field.getUserClickPosition(event);
+
+    if (translating ) {
+        transform(cursor_position);
     }
+    previous_cursor_position = cursor_position;
 
-    last_x = position.x;
-    last_y = position.y;
     if (mode =="Set") {
-        field.display();
-    
-
         field.context.beginPath();
         field.context.strokeStyle = "gray";
-        field.context.fillStyle = "gray";
-        field.context.arc(position.x, position.y, radius * scale, 0, 2 * Math.PI);
+        field.context.arc(cursor_position.x, cursor_position.y, radius * scale, 0, 2 * Math.PI);
         field.context.stroke();
     }
+
 });
 
-field.canvas.addEventListener("mouseup", function() {
-    translating = false;
+field.canvas.addEventListener("mouseup", function(event) {
+    if (event.button == 2) {
+        translating = false
+    }
 });
 
 field.canvas.addEventListener("mousedown", function(event) {
-    translating = true;
-    let point;
-    switch (mode) {
-        case "Set":
-            let position = field.getUserClickPosition(event);
-
-            point = new Point(position, radius, ["None"]);
-            points.push(point);
-
-            field.createObject(position, "Circle", ["black"], radius);
-            break;
-
-        case "Remove":
-            let index = field.removeObject(field.getUserClickPosition(event));
-            points = points.slice(0, index).concat(points.slice(index + 1));
-            break;
-        
-        case "Explore":
-            point = points[field.getPointIndexByPositionOrNull(field.getUserClickPosition(event))];
-            
-            if (!point) {
-                return;
-            }
-
-            let last_div = document.getElementById("point_config");
-            last_div.remove();
-
-            let div_point_config = document.createElement("div")
-            document.body.appendChild(div_point_config);
-            div_point_config.id = "point_config";
-
-            let point_header = document.createElement("h2");
-            let position_p = document.createElement("p");
-            let x_p = document.createElement("p");
-            let y_p = document.createElement("p");
-            let weight_p = document.createElement("label");
-            let weight = document.createElement("input");
-            let clusters_header = document.createElement("h3");
-
-
-            weight.type = "number";
-            weight.min = "1";
-            weight.max = "50";
-            weight.value = point.weight;
-            weight.addEventListener("change", function() {
-                point.weight = weight.value;
-                sync_points_and_objects();
-            })
-
-            div_point_config.appendChild(point_header);
-            div_point_config.appendChild(position_p);
-            div_point_config.appendChild(x_p);
-            div_point_config.appendChild(y_p);
-            div_point_config.appendChild(weight_p);
-            div_point_config.appendChild(weight);
-            div_point_config.appendChild(clusters_header);
-
-            point_header.appendChild(document.createTextNode("Point configuration"));
-            position_p.appendChild(document.createTextNode(`Position:`));
-            x_p.appendChild(document.createTextNode(`x: ${point.position.x}`));
-            y_p.appendChild(document.createTextNode(`y: ${point.position.y}`));
-            weight_p.appendChild(document.createTextNode(`Weight: `));
-            clusters_header.appendChild(document.createTextNode(`Clusters`));
-
-            for (let name in point.clusters) {
-                let cluster_name = document.createElement("p");
-                let center = document.createElement("p");
-                let x_center = document.createElement("p");
-                let y_center = document.createElement("p");
-                let color_text = document.createElement("p");
-                let cluster_color = document.createElement("input");
-
-                div_point_config.appendChild(cluster_name);
-                div_point_config.appendChild(center);
-                div_point_config.appendChild(x_center);
-                div_point_config.appendChild(y_center);
-                div_point_config.appendChild(color_text);
-                div_point_config.appendChild(cluster_color);
-
-                cluster_name.appendChild(document.createTextNode(`Algorithm: ${name}`));
-                center.appendChild(document.createTextNode("Center:"));
-                x_center.appendChild(document.createTextNode(`x: ${point.clusters[name].position.x}`));
-                y_center.appendChild(document.createTextNode(`y: ${point.clusters[name].position.y}`));
-                color_text.appendChild(document.createTextNode(`Cluster color: ${point.clusters[name].color}`));
-
-                cluster_color.type = "color";
-                cluster_color.value = point.clusters[name].color;
-                cluster_color.addEventListener("change", function() {
-                    changeClusterColor(point.clusters[name].name, name, cluster_color.value);
-                    color_text.innerText = "Cluster color: " + cluster_color.value;
-                });
-                
-
-            }
-            break;
+    if (event.button == 2) {
+        translating = true
     }
-    field.display();
 });
 
-radius_range.addEventListener("input", function() {
-    radius = radius_range.value;
-    point_radius_label.innerText = "Point radius: " + radius.toString();
-});
+clusterize_button.addEventListener("click", clusterize);
 
-cluster_count_range.addEventListener("input", function() {
-    cluster_count = cluster_count_range.value;
-    cluster_count_label.innerText = "Clusters count: " + cluster_count.toString();
-});
+radius_range.addEventListener("input", update_radius);
 
-set_scale_range.addEventListener("input", function() {
-    scale = set_scale_range.value;
-    field.scale = scale;
-    document.getElementById("set_scale_label").innerText = `Scale: ${scale}`;
-    field.display();
-});
+cluster_count_range.addEventListener("input", update_clusters_count);
 
-set_point_radio.addEventListener("input", function() {
-    field.canvas.style.cursor = "none";
-    mode = "Set";
-    reset_sidebar();
-});
+set_scale_range.addEventListener("input", update_scale);
 
-remove_point_radio.addEventListener("input", function() {
-    field.canvas.style.cursor = "default";
-    mode = "Remove";
-    field.display();
-    reset_sidebar();
-});
+set_point_radio.addEventListener("input", () => set_mode("Set") );
 
-explore_radio.addEventListener("input", function() {
-    field.canvas.style.cursor = "default";
-    mode = "Explore";
-    field.display();
-    document.getElementById("info_p").innerText = 'Click on a point to view its configuration.';
-});
+remove_point_radio.addEventListener("input", () => set_mode("Remove"));
 
-clear_field_button.addEventListener("click", function() {
-    reset();
-});
+explore_radio.addEventListener("input", () => set_mode("Explore"));
 
-export_button.addEventListener("click", function() {
-    export_txt();
-});
+clear_field_button.addEventListener("click", reset);
 
-import_button.addEventListener("change", function(event) {
-    import_txt(event.target.files[0]);
-});
+export_button.addEventListener("click", export_txt);
+
+import_button.addEventListener("change", (event) => import_txt(event.target.files[0]));
