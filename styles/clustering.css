@@ -5,11 +5,18 @@ body {
     grid-template-rows: 1fr 6fr;
 }
 
+.module {
+    display: grid;
+    padding: 15px;
+}
+
 #field {
     height: 100%;
     width: 100%;
 }
 
 #settings_bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-column: 1/3;
 }

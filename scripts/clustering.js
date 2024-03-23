@@ -5,9 +5,7 @@ class Point {
     constructor (position, weight) {
         this.position = position;
         this.weight = weight;
-        this.clusters = {
-            "k-means": null
-        };
+        this.clusters = {};
     }
 }
 
@@ -19,7 +17,72 @@ class Cluster {
     }
 }
 
-let clear_field_button = document.getElementById("clear_field_button");
+function clear_clustering(algorithm) {
+    for (let point of points) {
+        if (point.visited) {
+            point.visited = false;
+        }
+        if (point.clusters.hasOwnProperty(algorithm)) {
+            delete point.clusters[algorithm];
+        }
+    }
+}
+
+function getRandomHexColor() {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+
+    const hexR = r.toString(16).padStart(2, '0');
+    const hexG = g.toString(16).padStart(2, '0');
+    const hexB = b.toString(16).padStart(2, '0');
+
+    return `#${hexR}${hexG}${hexB}`;
+}
+
+function findNeighbors(point) {
+    return points.filter(otherPoint => field.getPointsDistance(point.position, otherPoint.position) <= epsilon);
+}
+
+function DBSCAN() {
+    clear_clustering("dbscan");
+    let i = 0;
+    for (let point of points) {
+        if (point.visited) continue;
+        point.visited = true;
+
+        const neighbors = findNeighbors(point);
+
+        if (neighbors.length > minPts) {
+            point.clusters["dbscan"] = new Cluster(null, i, getRandomHexColor());
+            expandCluster(point, neighbors, point.clusters["dbscan"]);
+            i++;
+        }
+    }
+    sync_points_and_objects();
+    field.display();
+}
+
+function expandCluster(seed, neighbors, cluster) {
+    seed.clusters["dbscan"] = cluster;
+
+    for (let i = 0; i < neighbors.length; i++) {
+        const neighbor = neighbors[i];
+        if (!neighbor.visited) {
+            neighbor.visited = true;
+            const neighborNeighbors = findNeighbors(neighbor);
+            if (neighborNeighbors.length >= minPts) {
+                for (let current_neighbor of neighborNeighbors) {
+                    current_neighbor.clusters["dbscan"] = cluster;
+                    neighbors.push(current_neighbor);
+                }
+            }
+        }
+    }
+}
+
+
+let reset_button = document.getElementById("reset_button");
 let export_button = document.getElementById("export_button");
 let set_point_radio = document.getElementById("set_point");
 let remove_point_radio = document.getElementById("remove_point");
@@ -30,8 +93,13 @@ let set_scale_range = document.getElementById("set_scale");
 let set_scale_label = document.getElementById("set_scale_label");
 let point_radius_label = document.getElementById("point_radius_label");
 let cluster_count_label = document.getElementById("cluster_count_label");
-let clusterize_button = document.getElementById("clusterize_button");
+let k_means_button = document.getElementById("k_means_button");
+let dbscan_button = document.getElementById("dbscan_button")
 let import_button = document.getElementById("import_button");
+let epsilon_label = document.getElementById("epsilon_label");
+let epsilon_range = document.getElementById("epsilon");
+let minpts_label = document.getElementById("minpts_label");
+let minpts_range = document.getElementById("minpts");;
 
 let cluster_count = cluster_count_range.value;
 let points = [];
@@ -40,6 +108,9 @@ let previous_cursor_position = new Position(0, 0);
 let radius = radius_range.value;
 let translating = false;
 let scale = 1;
+
+let epsilon = epsilon_range.value;
+let minPts = minpts_range.value;
 
 let field = new Field("field");
 field.canvas.style.cursor = "none";
@@ -58,6 +129,7 @@ let mode_cursor = {
 }
 
 function k_means() {
+    clear_clustering("k-means");
     let clusters = new Array(cluster_count);
     let checked = new Array(points.length).fill(false);
     let index;
@@ -118,13 +190,12 @@ function changeClusterColor(cluster_name, algorithm, new_color) {
 function sync_points_and_objects() {
     let point_colors;
     for (let i = 0; i < points.length; i++) {
-        if (points[i].clusters["k-means"]) {
-            point_colors = [];
-            for (let cluster in points[i].clusters) {
-                point_colors.push(points[i].clusters[cluster].color);
-            }
-            field.objects[i].colors = point_colors;
+        point_colors = [];
+        for (let cluster in points[i].clusters) {
+            point_colors.push(points[i].clusters[cluster].color);
         }
+
+        field.objects[i].colors = (point_colors.length != 0) ? point_colors : ["black"];
         field.objects[i].size = points[i].weight;
     }
 }
@@ -271,6 +342,7 @@ function remove_element(id) {
     document.getElementById(id).remove();
 }
 
+//need refactoring
 function show_point_configuration(position) {
     let point = points[field.getPointIndexByPositionOrNull(position)];
     if (!point) {
@@ -316,8 +388,14 @@ function show_point_configuration(position) {
 
             let cluster_name = create_element_p(`Algorithm: ${name}`, "");
             let center = create_element_p("Center:", "");
-            let x_center = create_element_p(`x: ${point.clusters[name].position.x}`, "");
-            let y_center = create_element_p(`y: ${point.clusters[name].position.y}`, "");
+            div_point_config.appendChild(cluster_name);
+            if (point.clusters[name].position) {
+                div_point_config.appendChild(center);
+                let x_center = create_element_p(`x: ${point.clusters[name].position.x}`, "");
+                div_point_config.appendChild(x_center);
+                let y_center = create_element_p(`y: ${point.clusters[name].position.y}`, "");
+                div_point_config.appendChild(y_center);
+            }
             let color_text = create_element_p(`Cluster color: ${point.clusters[name].color}`, "");
             
             let cluster_color = document.createElement("input");
@@ -328,10 +406,6 @@ function show_point_configuration(position) {
                 color_text.innerText = "Cluster color: " + cluster_color.value;
             });
             
-            div_point_config.appendChild(cluster_name);
-            div_point_config.appendChild(center);
-            div_point_config.appendChild(x_center);
-            div_point_config.appendChild(y_center);
             div_point_config.appendChild(color_text);
             div_point_config.appendChild(cluster_color);
         }
@@ -350,6 +424,16 @@ function set_mode(new_mode) {
 function update_radius() {
     radius = radius_range.value;
     point_radius_label.innerText = `Point radius: ${radius.toString()}`;
+}
+
+function update_epsilon() {
+    epsilon = epsilon_range.value;
+    epsilon_label.innerText = `Epsilon: ${epsilon.toString()}`;
+}
+
+function update_minpts() {
+    minPts = minpts_range.value;
+    minpts_label.innerText = `minPts: ${minPts.toString()}`;
 }
 
 function update_clusters_count() {
@@ -408,7 +492,13 @@ field.canvas.addEventListener("mousedown", function(event) {
     }
 });
 
-clusterize_button.addEventListener("click", clusterize);
+minpts_range.addEventListener("input", update_minpts);
+
+epsilon_range.addEventListener("input", update_epsilon);
+
+dbscan_button.addEventListener("click", DBSCAN);
+
+k_means_button.addEventListener("click", clusterize);
 
 radius_range.addEventListener("input", update_radius);
 
@@ -422,7 +512,7 @@ remove_point_radio.addEventListener("input", () => set_mode("Remove"));
 
 explore_radio.addEventListener("input", () => set_mode("Explore"));
 
-clear_field_button.addEventListener("click", reset);
+reset_button.addEventListener("click", reset);
 
 export_button.addEventListener("click", export_txt);
 
