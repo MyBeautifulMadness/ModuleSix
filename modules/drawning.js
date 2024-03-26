@@ -1,5 +1,6 @@
 const Types = {
-    Circle: 'Circle'
+    Circle: 'Circle',
+    Rectangle: 'Rectangle'
 };
 
 export class Position {
@@ -89,13 +90,19 @@ export class Field {
                     return i;
                 } 
             }
+            else if (this.objects[i].type == Types.Square) {
+                if (cursorPosition.x >= objectPosition.x && cursorPosition.x <= objectPosition.x + this.objects[i].size[0] &&
+                    cursorPosition.y >= objectPosition.y && cursorPosition.y <= objectPosition.y + this.objects[i].size[1]) {
+                    return i;
+                } 
+            }
         }
 
         return null;
     }
 
     display () {
-        this.resize();
+        // this.resize();
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         for (let object of this.objects) {
@@ -110,6 +117,12 @@ export class Field {
                     this.context.closePath();
                     this.context.fill();
                 }
+            }
+            else if (object.type === Types.Rectangle) {
+                this.context.fillStyle = object.colors;
+                this.context.beginPath();
+                this.context.rect(object.position.x, object.position.y, object.size[0], object.size[1]);
+                this.context.fill();
             }
         }
     }

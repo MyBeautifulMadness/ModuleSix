@@ -1,5 +1,5 @@
 import { Field, Position } from "../modules/drawning.js"
-import { colors } from "./conts.js" 
+import { colors } from "../modules/conts.js" 
 
 class Point {
     constructor (position, weight) {
@@ -82,24 +82,24 @@ function expandCluster(seed, neighbors, cluster) {
 }
 
 
-let reset_button = document.getElementById("reset_button");
-let export_button = document.getElementById("export_button");
-let set_point_radio = document.getElementById("set_point");
-let remove_point_radio = document.getElementById("remove_point");
-let explore_radio = document.getElementById("explore_field");
-let cluster_count_range = document.getElementById("cluster_count");
-let radius_range = document.getElementById("point_radius");
-let set_scale_range = document.getElementById("set_scale");
-let set_scale_label = document.getElementById("set_scale_label");
-let point_radius_label = document.getElementById("point_radius_label");
-let cluster_count_label = document.getElementById("cluster_count_label");
-let k_means_button = document.getElementById("k_means_button");
-let dbscan_button = document.getElementById("dbscan_button")
-let import_button = document.getElementById("import_button");
-let epsilon_label = document.getElementById("epsilon_label");
-let epsilon_range = document.getElementById("epsilon");
-let minpts_label = document.getElementById("minpts_label");
-let minpts_range = document.getElementById("minpts");;
+const reset_button = document.getElementById("reset_button");
+const export_button = document.getElementById("export_button");
+const set_point_radio = document.getElementById("set_point");
+const remove_point_radio = document.getElementById("remove_point");
+const explore_radio = document.getElementById("explore_field");
+const cluster_count_range = document.getElementById("cluster_count");
+const radius_range = document.getElementById("point_radius");
+const set_scale_range = document.getElementById("set_scale");
+const set_scale_label = document.getElementById("set_scale_label");
+const point_radius_label = document.getElementById("point_radius_label");
+const cluster_count_label = document.getElementById("cluster_count_label");
+const k_means_button = document.getElementById("k_means_button");
+const dbscan_button = document.getElementById("dbscan_button")
+const import_button = document.getElementById("import_button");
+const epsilon_label = document.getElementById("epsilon_label");
+const epsilon_range = document.getElementById("epsilon");
+const minpts_label = document.getElementById("minpts_label");
+const minpts_range = document.getElementById("minpts");;
 
 let cluster_count = cluster_count_range.value;
 let points = [];
