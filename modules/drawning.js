@@ -102,7 +102,7 @@ export class Field {
     }
 
     display () {
-        // this.resize();
+        this.resize();
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         for (let object of this.objects) {

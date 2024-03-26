@@ -151,7 +151,7 @@ function getUserClickPosition (event) {
     let position = new Position(x, y);
     return position;
 }
-
+ 
 function generateField() {
     maze.clear();
 
