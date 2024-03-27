@@ -1,6 +1,11 @@
 import { Field, Position, Rectangle } from "../modules/drawning_r.js"
 import { PriorityQueue } from "../modules/PriorityQueue.js";
+import { generate } from "./maze_generator.js";
 import * as SOURCE from "../modules/conts.js"
+
+function delay(timeout) {
+    return new Promise((resolve) => setTimeout(resolve, timeout));
+}
 
 class Graph {
     constructor (vertices) {
@@ -19,7 +24,7 @@ class Graph {
         return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
-    Astar(start, finish) {
+    async Astar(start, finish) {
         let frontier = new PriorityQueue();
         frontier.put(start, 0);
         let came_from = {};
@@ -37,7 +42,7 @@ class Graph {
             for (let vertex of this.adjacencyList[current]) {
                 let posA = maze.objects[vertex].position;
                 let posB = maze.objects[finish].position;
-                let new_cost = cost_so_far[current] + this.heuristic(posA, posB);
+                let new_cost = cost_so_far[current] + this.heuristic(posA, posB) ** 4;
                 if (!(vertex in cost_so_far) || (new_cost < cost_so_far[vertex])) {
                     cost_so_far[vertex] = new_cost;
                     frontier.put(vertex, cost_so_far[vertex]);
@@ -45,6 +50,8 @@ class Graph {
                 }
 
                 maze.objects[vertex].color = "gray";
+                maze.display();
+                await delay(0);
             }
         }
 
@@ -53,6 +60,8 @@ class Graph {
             console.log(current_vertex);
             maze.objects[current_vertex].color = "orange";
             current_vertex = came_from[current_vertex];
+            maze.display();
+            await delay(10); 
         }
 
         maze.display();
@@ -134,14 +143,11 @@ let maze_matrix = []
 
 let source, destination;
 
-generateField();
-
 function solve() {
     let graph = new Graph(maze.objects.length);
     graph.initFromList(maze.objects);
     graph.Astar(parseInt(source.position.y / cell_size) * maze_size + parseInt(source.position.x / cell_size), parseInt(destination.position.y / cell_size) * maze_size + parseInt(destination.position.x / cell_size));
 }
-
 
 function getUserClickPosition (event) {
     const rectangle = canvas.getBoundingClientRect();
@@ -154,20 +160,28 @@ function getUserClickPosition (event) {
  
 function generateField() {
     maze.clear();
-
-    let row, object;
-    maze_matrix = [];
+    cell_size = (canvas.width / maze_size);
+    maze_matrix = generate(maze_size);
     for (let y = 0; y < maze_size; y++) {
-        row = [];
         for (let x = 0; x < maze_size; x++) {
-            row.push(true);
-            object = new Rectangle(new Position(x * cell_size, y * cell_size), SOURCE.SPACE_COLOR, cell_size, cell_size) ;
-            maze.appendObject(object);
+            const cell = new Rectangle(new Position(x * cell_size, y * cell_size), (maze_matrix[y][x]) ? SOURCE.SPACE_COLOR : SOURCE.WALL_COLOR, cell_size, cell_size)
+            maze.appendObject(cell);
         }
-        maze_matrix.push(row);
     }
-
     maze.display();
+    maze.display();
+}
+
+function clearSolution() {
+    source = undefined;
+    destination = undefined;
+    for (let object of maze.objects) {
+        if (object.color !== SOURCE.WALL_COLOR) {
+            object.color = SOURCE.SPACE_COLOR;
+        }
+    }
+    maze.display();
+    maze.display(); // Какого-то хуя не стирает границы, если не обновить дважды... REFACTOR
 }
 
 function setWall(cell, indexes) {
@@ -226,26 +240,33 @@ function clickAction(event) {
 }
 
 
-generate_button.addEventListener("click", generateField)
+generate_button.addEventListener("click", generateField);
 
-canvas.addEventListener("click", (event) => { clickAction(event); })
+canvas.addEventListener("click", (event) => { clickAction(event); });
+
+clear_solution_button.addEventListener("click", clearSolution);
 
 solve_button.addEventListener("click", () => {
     solve();
-})
+});
 
 set_source_radio.addEventListener("input", () => {
     mode = MODE.Source;
-})
+});
 
 set_destination_radio.addEventListener("input", () => {
     mode = MODE.Destination;
-})
+});
 
 set_wall_radio.addEventListener("input", () => {
     mode = MODE.Wall;
-})
+});
 
 set_space_radio.addEventListener("input", () => {
     mode = MODE.Space;
-})
+});
+
+maze_size_range.addEventListener("input", () => {
+    maze_size = parseInt(maze_size_range.value);
+    maze_size_label.innerText = `Maze size: ${maze_size}`;
+});
