@@ -1,7 +1,7 @@
 import { Field, Position, Rectangle } from "../modules/drawning_r.js"
 import { PriorityQueue } from "../modules/PriorityQueue.js";
 import { generate } from "./maze_generator.js";
-import * as SOURCE from "../modules/conts.js"
+import * as SOURCE from "../modules/conts.js";
 
 function delay(timeout) {
     return new Promise((resolve) => setTimeout(resolve, timeout));
@@ -26,11 +26,12 @@ class Graph {
 
     async Astar(start, finish) {
         let frontier = new PriorityQueue();
-        frontier.put(start, 0);
+        let cost_so_far = {};
         let came_from = {};
+
+        frontier.put(start, 0);
         came_from[start] = null;
-        let cost_so_far = {}
-        cost_so_far[start] = 0
+        cost_so_far[start] = 0;
 
         while (!frontier.isEmpty()) {
             let current = frontier.pop();
@@ -132,6 +133,7 @@ const canvas = document.getElementById("field");
 const maze = new Field("field");
 
 let mode = MODE.Wall;
+let draw = false;
 
 canvas.height = canvas.clientHeight;
 canvas.width = canvas.clientWidth; 
@@ -142,6 +144,8 @@ let cell_size = (canvas.width / maze_size);
 let maze_matrix = []
 
 let source, destination;
+
+generateField();
 
 function solve() {
     let graph = new Graph(maze.objects.length);
@@ -242,7 +246,13 @@ function clickAction(event) {
 
 generate_button.addEventListener("click", generateField);
 
-canvas.addEventListener("click", (event) => { clickAction(event); });
+canvas.addEventListener("mousemove", (event) => { 
+    if (draw) {
+        clickAction(event);
+    }
+ });
+canvas.addEventListener("mouseup", () => { draw = false; });
+canvas.addEventListener("mousedown", () => { draw = true; });
 
 clear_solution_button.addEventListener("click", clearSolution);
 

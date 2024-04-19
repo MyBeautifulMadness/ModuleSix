@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Ant algorithm</title>
+        <link rel="stylesheet" href="../styles/ant.css">
+    </head>
+
+    <body>
+        <div id="content">
+            <div id="settings_bar">
+                <div id="mode_panel">
+                    <div>
+                        <input id="set_point" type="radio" name="mode">
+                        <label for="set_point">Set point</label>
+                    </div>
+                    <div>
+                        <input id="remove_point" type="radio" name="mode">
+                        <label for="remove_point">Remove point</label>
+                    </div>
+                </div>
+
+                <div id="simulation">
+                    <label>Simulation speed</label>
+                    <input type="range" value="10" min="1" max="100">
+                    <button>Solve</button>
+                </div>
+            </div>
+        
+            <div id="visualisation_field">
+                <canvas id="field"></canvas>
+            </div>
+        </div>
+
+        <script src="../scripts/ant.js" type="module"></script>
+    </body>
+</html>
