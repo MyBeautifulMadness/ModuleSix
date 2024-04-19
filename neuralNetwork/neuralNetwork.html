@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+    <script type='text/javascript' src='neuralNetwork.js'></script>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../clustering/clustering.css">
+    <title>Нейронка</title>
+    <style>
+        .pixel {
+            width: 40px;
+            height: 40px;
+            display: inline-block;
+            border: 1px solid white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="catalog">
+        <a class="link" href="../index.html"> Main</a>
+
+        <div class="links"></div>
+            <a class="link" href='/aStar/astar.html'>A*</a>
+            <a class="link" href='/clustering/clustering.html'>Кластеризация</a>
+            <a class="link" href='/genetic/genetic.html'>Генетический алгоритм</a>
+            <a class="link" href='/antColony/antColony.html'>Муравьиный алгоритм</a>
+            <a class="link" href='/decisionTree/TreePage.html'>Дерево решений</a>
+            <a class="currlink" href='/neuralNetwork/neuralNetwork.html'>Нейросеть</a>
+        </div>
+    </div>
+
+    <div id="imageContainer">
+        <div class="pixel" onclick="toggleColor(this, 0)"></div> 
+        <div class="pixel" onclick="toggleColor(this, 1)"></div>
+        <div class="pixel" onclick="toggleColor(this, 2)"></div>
+        <div class="pixel" onclick="toggleColor(this, 3)"></div>
+        <div class="pixel" onclick="toggleColor(this, 4)"></div>
+        <br>
+        <div class="pixel" onclick="toggleColor(this, 5)"></div>
+        <div class="pixel" onclick="toggleColor(this, 6)"></div>
+        <div class="pixel" onclick="toggleColor(this, 7)"></div>
+        <div class="pixel" onclick="toggleColor(this, 8)"></div>
+        <div class="pixel" onclick="toggleColor(this, 9)"></div>
+        <br>
+        <div class="pixel" onclick="toggleColor(this, 10)"></div>
+        <div class="pixel" onclick="toggleColor(this, 11)"></div>
+        <div class="pixel" onclick="toggleColor(this, 12)"></div>
+        <div class="pixel" onclick="toggleColor(this, 13)"></div>
+        <div class="pixel" onclick="toggleColor(this, 14)"></div>
+        <br>
+        <div class="pixel" onclick="toggleColor(this, 15)"></div>
+        <div class="pixel" onclick="toggleColor(this, 16)"></div>
+        <div class="pixel" onclick="toggleColor(this, 17)"></div>
+        <div class="pixel" onclick="toggleColor(this, 18)"></div>
+        <div class="pixel" onclick="toggleColor(this, 19)"></div>
+        <br>
+        <div class="pixel" onclick="toggleColor(this, 20)"></div>
+        <div class="pixel" onclick="toggleColor(this, 21)"></div>
+        <div class="pixel" onclick="toggleColor(this, 22)"></div>
+        <div class="pixel" onclick="toggleColor(this, 23)"></div>
+        <div class="pixel" onclick="toggleColor(this, 24)"></div>
+    </div>
+
+    <script>
+         const pixelData = new Array(25).fill(0);
+
+function toggleColor(pixel, index) 
+{
+    if (pixel.style.backgroundColor === "white") 
+    {
+        pixel.style.backgroundColor = "black";
+    } 
+    else
+    {
+        pixel.style.backgroundColor = "white";
+    }
+    pixelData[index] = 1 - pixelData[index]; // Toggle between 0 and 1
+}
+function saveData() 
+{
+    console.log(pixelData);
+    start(pixelData);
+}
+</script>
+<button onclick="saveData()">Save Data</button>
+</body>
+
+</html>

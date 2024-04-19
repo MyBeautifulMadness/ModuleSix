@@ -1,0 +1,75 @@
+body {
+    color: white;
+    background-color: black;
+}
+
+.catalog {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 35px;
+
+}
+.links {
+    margin-left: 100px;
+}
+
+.link {
+    text-decoration: none;
+    margin-right: 20px;
+    color: #f0f0f0;
+    font-size: 20px;
+}
+
+.link:hover {
+    color: rgb(235, 48, 48);
+}
+
+.currlink {
+    text-decoration: none;
+    margin-right: 20px;
+    color: red;
+    font-size: 20px;
+}
+
+.currlink:hover {
+    color: rgb(235, 48, 48);
+} 
+
+.row {
+    display: flex;
+}
+
+#content {
+    margin: 0px;
+    padding: 0px;
+    display: grid;
+    height: 100vh;
+    grid-template-columns: 4fr 1fr;
+    grid-template-rows: 1fr 6fr;
+}
+
+.module {
+    display: grid;
+    padding: 15px;
+}
+
+canvas {
+    border: 5px solid black;
+    background-color: wheat;
+  }
+
+#settings_bar {
+    display: grid;
+    color: white;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-column: 1/3;
+}
+
+.cluster_count {
+    color: white;
+}
+.epsilon {
+    background: white;
+}

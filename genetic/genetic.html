@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="../genetic/genetic.css">
+</head>
+
+<body>
+    <div class="catalog">
+        <a class="link" href="../index.html"> Main</a>
+
+        <div class="links"></div>
+            <a class="link" href='/aStar/astar.html'>A*</a>
+            <a class="link" href='/clustering/clustering.html'>Кластеризация</a>
+            <a class="currlink" href='/genetic/genetic.html'>Генетический алгоритм</a>
+            <a class="link" href='/antColony/antColony.html'>Муравьиный алгоритм</a>
+            <a class="link" href='/decisionTree/TreePage.html'>Дерево решений</a>
+            <a class="link" href='/neuralNetwork/neuralNetwork.html'>Нейросеть</a>
+        </div>
+    </div>
+
+    <div class="div1">
+        <label for="Mutation Rate">Процент Мутаций</label>
+        <input type="number" step="any" id="mutationRate" value="0.2">
+        <label for="populationSize">Размер Популяции</label>
+        <input type="number" id="populationSize" value="100">
+        <label for="maxGenerations">Количество Поколений</label>
+        <input type="number" id="maxGenerations" value="200">
+        <button onclick="start()">Start</button>
+        <button onclick="clear()">Clear</button>
+        <canvas id="field" width="970" height="420"></canvas>
+    </div>
+    <script src="../genetic/genetic.js"></script>
+</body>
+
+</html>

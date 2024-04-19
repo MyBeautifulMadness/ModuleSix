@@ -3,10 +3,23 @@
 <html>
     <head>
         <title>Clustering</title>
-        <link rel="stylesheet" href="../styles/clustering.css">
+        <link rel="stylesheet" href="../clustering/clustering.css">
     </head>
 
     <body>
+        <div class="catalog">
+            <a class="link" href="../index.html"> Main</a>
+
+            <div class="links"></div>
+                <a class="link" href='/aStar/astar.html'>A*</a>
+                <a class="currlink" href='/clustering/clustering.html'>Кластеризация</a>
+                <a class="link" href='/genetic/genetic.html'>Генетический алгоритм</a>
+                <a class="link" href='/antColony/antColony.html'>Муравьиный алгоритм</a>
+                <a class="link" href='/decisionTree/TreePage.html'>Дерево решений</a>
+                <a class="link" href='/neuralNetwork/neuralNetwork.html'>Нейросеть</a>
+            </div>
+        </div>
+
         <div id="content">
             <div id="settings_bar">
                 <div class="module">
@@ -63,12 +76,11 @@
                     <button id="export_button">Export</button>
                     <label for="import_button">Import</label>
                     <input id="import_button" type="file" accept=".txt">
-                    <a href="./index.html">Back to main page</a>
                 </div>
             </div>
             
             <div id="visualisation_field">
-                <canvas id="field" oncontextmenu="return false;"></canvas>
+                <canvas id="field" width="800" height="400"></canvas>
             </div>
             
             <div id="point_config">
@@ -77,7 +89,7 @@
             </div>
             
         </div>
-        <script src="../scripts/clustering.js" type="module"></script>
+        <script src="../clustering/clustering.js" type="module"></script>
         
     </body>
 </html>

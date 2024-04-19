@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+
+<head>
+<link rel="stylesheet" href="tree.css">
+<title>Program that makes csv-Tree</title>
+<script  type='text/javascript' src='tree.js'></script>
+</head>
+<body>
+  <div class="catalog">
+    <a class="link" href="../index.html"> Main</a>
+
+    <div class="links"></div>
+        <a class="link" href='/aStar/astar.html'>A*</a>
+        <a class="link" href='/clustering/clustering.html'>Кластеризация</a>
+        <a class="link" href='/genetic/genetic.html'>Генетический алгоритм</a>
+        <a class="link" href='/antColony/antColony.html'>Муравьиный алгоритм</a>
+        <a class="currlink" href='/decisionTree/TreePage.html'>Дерево решений</a>
+        <a class="link" href='/neuralNetwork/neuralNetwork.html'>Нейросеть</a>
+    </div>
+  </div>
+  <div>
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="processCSV()">insert data into Tree</button>
+    <script src="csvreader.js"></script>
+    <input type='button' onClick='countAverage()' value='New Tree'>
+    <input type="file" id="decisionFile" accept=".csv">
+    <button onclick="processDecision()"> make decisions</button>
+  </div>
+  <div class="tree-container">
+    <svg id="tree-svg" width="800" height="800"></svg>
+  </div>
+</body>
+</html>
